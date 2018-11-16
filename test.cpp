@@ -1,44 +1,52 @@
 #include "matlib/matlib.h"
 
-int main() {
-  std::vector<double> x(10);
-  for (int i = 0; i < 10; i++)
-    x[i] = 0;
-  auto rosen = [](std::vector<double> x) {
-    double fx = 0.0;
-    for (int i = 0; i < 10; i += 2) {
-      double t1 = 1.0 - x[i];
-      double t2 = 10 * (x[i + 1] - x[i] * x[i]);
-      fx += t1 * t1 + t2 * t2;
-    }
-    return fx;
-  };
-  auto rosengrad = [](std::vector<double> x) {
-    std::vector<double> grad(10);
-    for (int i = 0; i < 10; i += 2) {
-      double t1 = 1.0 - x[i];
-      double t2 = 10 * (x[i + 1] - x[i] * x[i]);
-      grad[i + 1] = 20 * t2;
-      grad[i] = -2.0 * (x[i] * grad[i + 1] + t1);
-    }
-    return grad;
-  };
-  std::ofstream out;
-  out.open("test.dat");
-  auto [success, itr, calls] = bfgs(x, rosen, rosengrad, &out);
-  printf("%s! x ended as <", success ? "Success": "Failure");
-  for(int i = 0; i < 10; i++){
-    printf("%s%f", (i == 0) ? "" : ", ", x[i]);
+#include <iostream>
+#include <sstream>
+#include <unistd.h>
+
+class koopman_nn {
+public:
+  inline koopman_nn(std::vector<unsigned> topology) : m_topology(topology) {
+    unsigned num = 0;
+    for (int i = 1; i < m_topology.size(); i++)
+      num += m_topology[i] * m_topology[i - 1];
+    m_weights.reserve(num);
   }
-  printf("> with %i iterations and %i function calls\n", itr, calls);
-  std::ofstream script;
-  script.open("script.plot");
-  script << "set xlabel 'iteration'\nset ylabel 'value'\n";
-  //script << "plot ";
-  for(int i = 0; i < 10; i++){
-    script << "plot 'test.dat' using 1:" << (i * 2) + 2 << " with lines title 'x_" << i << "'\npause -1 'press a key to continue'\n";
-    //script << (i == 0 ? "" : ", ") << "'test.dat' using 1:" << (i * 2) + 2 << " with lines title 'x_" << i << "'";
+  inline ~koopman_nn() {}
+  struct derivative {
+    koopman_nn *koop;
+    inline std::vector<double> operator()(std::vector<double> inputs){
+      
+      return inputs;
+    }
+  };
+  struct cost {
+    koopman_nn *koop;
+    inline double operator()(std::vector<double> inputs){
+      
+      return 0;
+    }
+  };
+  inline std::vector<double> operator()(std::vector<double> inputs = {}){
+    
+    return inputs;
   }
-  script << "\n";
+  
+  
+private:
+  std::vector<unsigned> m_topology;
+  std::vector<double> m_weights;
+};
+
+int test(int y){
+  return y * y;
+}
+
+int main(int, char **) {
+  thread_pool<8> tp;
+  std::vector<double> A = {2, 3, 4}, B = {1, 2, 1, -1, 1, -1, 2};
+  std::vector<double> C = {0, 0};
+  matlib::matmult_strassen(A, 1, 3, 0, B, 3, 2, 0, C, 2, 1, 0, tp);
+  std::cout << C[0] << std::endl;
   return 0;
 }

@@ -78,13 +78,6 @@ inline std::tuple<bool, int, int> bfgs(std::vector<double>& x, F1 func, F2 deriv
   gnorm[k++] = norm(g);
 
   while ((gnorm[k - 1] > tolerance) && (k < maxItr)) {
-    if(file){
-      (*file) << (k) << " " << fx << " ";
-      for(int i = 0; i < N; i++){
-        (*file) << (x[i]) << " " << g[i] << " ";
-      }
-      (*file) << "\n";
-    }
     std::vector<double> d(g.size());
     for (int i = 0; i < N; i++) {
       d[i] = 0;
@@ -94,6 +87,14 @@ inline std::tuple<bool, int, int> bfgs(std::vector<double>& x, F1 func, F2 deriv
     }
     auto [success, dalpha] = step(x, d);
     alpha = dalpha;
+    if(file){
+      (*file) << (k) << " " << fx << " " << alpha << " ";
+      for(int i = 0; i < N; i++){
+        (*file) << (x[i]) << " " << g[i] << " ";
+      }
+      (*file) << "\n";
+    }
+    //printf("%f\n", alpha);
     if(!success){
       std::vector<double> HmE(H.size());
       for(int i = 0; i < H.size(); i++){
@@ -167,15 +168,15 @@ inline std::tuple<bool, int, int> bfgs(std::vector<double>& x, F1 func, F2 deriv
         double sqrtyHy = sqrt(yHy);
         for(int i = 0; i < N; i++){
           v[i] = sqrtyHy * (s[i] / ys - Hy[i] / yHy);
-          std::vector<double> Hnew(N * N);
-          for(int i = 0; i < N; i++){
-            for(int j = 0; j < N; j++){
-              Hnew[i * N + j] = H[i * N + j] + (s[i] * s[j]) / ys - (Hy[i] * Hy[j]) / yHy + (v[i] * v[j]);
-            }
+        }
+        std::vector<double> Hnew(N * N);
+        for(int i = 0; i < N; i++){
+          for(int j = 0; j < N; j++){
+            Hnew[i * N + j] = H[i * N + j] + (s[i] * s[j]) / ys - (Hy[i] * Hy[j]) / yHy + (v[i] * v[j]);
           }
-          for(int i = 0; i < N*N; i++){
-            H[i] = Hnew[i];
-          }
+        }
+        for(int i = 0; i < N*N; i++){
+          H[i] = Hnew[i];
         }
       }
       gnorm[k++] = norm(g);
